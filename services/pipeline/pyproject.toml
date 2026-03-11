@@ -11,5 +11,6 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "pytest>=9.0.2",
+    "scikit-learn>=1.8.0",
 ]
 
