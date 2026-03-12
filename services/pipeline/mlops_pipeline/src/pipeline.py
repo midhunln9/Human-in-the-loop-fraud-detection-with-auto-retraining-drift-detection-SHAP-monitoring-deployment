@@ -1,30 +1,64 @@
 from mlops_pipeline.configs.s3_storage_config import S3StorageConfig
 from mlops_pipeline.configs.transformation_config import TransformationConfig
+from mlops_pipeline.configs.preprocessing_config import PreprocessingConfig
 from mlops_pipeline.settings import Settings
 from mlops_pipeline.protocols.storage_protocol import StorageProtocol
 from mlops_pipeline.src.data_ingestion import DataIngestion
 from mlops_pipeline.src.data_transformation import DataTransformation
+from mlops_pipeline.src.data_preprocessing import DataPreprocessing
+from mlops_pipeline.protocols.model_versioning_protocol import ModelVersioningProtocol
 import logging
+from typing import List
+from mlops_pipeline.src.master_tuner import MasterTuner
+from mlops_pipeline.strategies.base_strategy import BaseModelStrategy
 
 logger = logging.getLogger(__name__)
 
 
 class PipelineRunner:
-    def __init__(self, s3_config : S3StorageConfig, 
-    settings: Settings, 
-    repository: StorageProtocol, 
-    transformation_config: TransformationConfig):
+    def __init__(self, s3_config : S3StorageConfig, settings: Settings, 
+    storage_repository: StorageProtocol, model_versioning_repository: ModelVersioningProtocol, 
+    transformation_config: TransformationConfig, preprocessing_config: PreprocessingConfig,
+    strategies : List[BaseModelStrategy]):
         self.s3_config = s3_config
         self.settings = settings
-        self.repository = repository
+        self.storage_repository = storage_repository
         self.transformation_config = transformation_config
+        self.preprocessing_config = preprocessing_config
+        self.model_versioning_repository = model_versioning_repository
+        self.strategies = strategies
     
     def run(self):
-        data_ingestion = DataIngestion(self.s3_config, self.repository)
+        data_ingestion = DataIngestion(self.s3_config, self.storage_repository)
         df = data_ingestion.ingest_data()
+
         transformation = DataTransformation(self.transformation_config)
         split_datasets = transformation.transform_data(df)
-        logger.info(f"Data transformation completed successfully")
+
+        preprocessing = DataPreprocessing(self.preprocessing_config, 
+        split_datasets, self.model_versioning_repository)
+        preprocessed_datasets = preprocessing.preprocess_data()
+
+        del split_datasets # clear memory of unwanted datasets
+
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.X_train, self.s3_config.preprocessed_train_data_key_features)
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.X_val, self.s3_config.preprocessed_validation_data_key_features)
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.X_test, self.s3_config.preprocessed_test_data_key_features)
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.y_train, self.s3_config.preprocessed_train_labels_key)
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.y_val, self.s3_config.preprocessed_validation_labels_key)
+        self.storage_repository.stream_upload_dataframe(preprocessed_datasets.y_test, self.s3_config.preprocessed_test_labels_key)
+
+        self.strategies = [strategy(preprocessed_datasets) for strategy in self.strategies]
+        hyperparameter_tuner = MasterTuner(strategies = self.strategies, model_versioning_repository = self.model_versioning_repository)
+        hyperparameter_tuner.start_hyperparameter_tuning()
+        logger.info(f"Pipeline completed successfully")
+
+
+
+
+
+
+
 
     
         

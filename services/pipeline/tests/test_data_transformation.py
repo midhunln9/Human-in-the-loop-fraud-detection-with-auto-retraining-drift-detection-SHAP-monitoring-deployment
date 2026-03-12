@@ -1,6 +1,6 @@
 from mlops_pipeline.src.data_transformation import DataTransformation
 from mlops_pipeline.configs.transformation_config import TransformationConfig
-from mlops_pipeline.src.types import SplitDatasets
+from mlops_pipeline.schemas.data import SplitDatasets
 import pandas as pd
 import pytest
 

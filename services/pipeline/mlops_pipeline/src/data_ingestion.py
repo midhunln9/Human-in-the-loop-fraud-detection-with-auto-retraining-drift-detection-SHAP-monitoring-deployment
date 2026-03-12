@@ -1,6 +1,7 @@
 from mlops_pipeline.configs.s3_storage_config import S3StorageConfig
 from mlops_pipeline.protocols.storage_protocol import StorageProtocol
 import logging
+from mlops_pipeline.exceptions import IngestionError
 
 logger = logging.getLogger(__name__)
 
@@ -25,5 +26,5 @@ class DataIngestion:
             return df
         except Exception as e:
             logger.error(f"Error ingesting data: {e}")
-            raise ValueError(f"check the data key: {self.config.raw_data_key}")
+            raise 
     
