@@ -9,9 +9,9 @@ def test_if_dataframe_after_preprocessing(preprocessing_config, split_datasets, 
     assert isinstance(result.X_train, pd.DataFrame)
     assert isinstance(result.X_val, pd.DataFrame)
     assert isinstance(result.X_test, pd.DataFrame)
-    assert isinstance(result.y_train, pd.DataFrame)
-    assert isinstance(result.y_val, pd.DataFrame)
-    assert isinstance(result.y_test, pd.DataFrame)
+    assert isinstance(result.y_train, pd.Series)
+    assert isinstance(result.y_val, pd.Series)
+    assert isinstance(result.y_test, pd.Series)
 
 def test_if_stored_in_preprocessed_class(preprocessing_config, split_datasets, model_versioning_repository_mock):
     data_preprocessing = DataPreprocessing(preprocessing_config, split_datasets, model_versioning_repository_mock)

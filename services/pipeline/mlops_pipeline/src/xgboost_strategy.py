@@ -50,11 +50,11 @@ class XGBoostStrategy(BaseModelStrategy):
         preds = model.predict_proba(self.data.X_val)[:, 1]
         return average_precision_score(self.data.y_val, preds)
 
-    def start_hyperparameter_tuning(self):
+    def start_hyperparameter_tuning(self, trials : int = 100):
         logger.info("XGBoost hyperparameter tuning started")
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(self.objective, n_trials=100)
+        study.optimize(self.objective, n_trials=trials)
 
         best_trial = study.best_trial
         best_params = best_trial.params.copy()

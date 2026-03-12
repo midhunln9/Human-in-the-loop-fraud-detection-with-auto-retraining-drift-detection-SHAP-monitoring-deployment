@@ -7,5 +7,5 @@ class BaseModelStrategy(ABC):
     def objective(self) -> float:
         ...
     @abstractmethod
-    def start_hyperparameter_tuning(self) -> HyperparameterTuningResult:
+    def start_hyperparameter_tuning(self, trials : int) -> HyperparameterTuningResult:
         ...
