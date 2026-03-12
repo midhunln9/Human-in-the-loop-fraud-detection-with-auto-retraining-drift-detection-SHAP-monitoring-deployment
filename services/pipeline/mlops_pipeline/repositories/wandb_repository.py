@@ -6,6 +6,7 @@ import tempfile
 import os
 import joblib
 import logging
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -13,13 +14,14 @@ class WandbRepository(ModelVersioningProtocol):
     def __init__(self, config: WandbConfig):
         self.config = config
 
-    def create_and_log_model_artifact_to_run(self, model: BaseEstimator, alias: str) -> None:
+    def create_and_log_model_artifact_to_run(self, model: BaseEstimator, alias: str, metric: float) -> None:
         try : 
             with wandb.init(entity=self.config.entity, project=self.config.project) as run:
                 with tempfile.TemporaryDirectory() as temp_dir:
                     model_path = os.path.join(temp_dir, self.config.model_file_name)
                     joblib.dump(model, model_path)
-                    artifact = wandb.Artifact(self.config.model_artifact_name, type=self.config.model_artifact_type)
+                    artifact = wandb.Artifact(self.config.model_artifact_name, type=self.config.model_artifact_type,
+                    metadata={"pr_auc": metric})
                     artifact.add_file(model_path)
                     run.log_artifact(artifact, aliases=[alias])
             logger.info(f"Model artifact created and logged successfully")
@@ -41,13 +43,13 @@ class WandbRepository(ModelVersioningProtocol):
             logger.error(f"Error creating and logging preprocessor artifact: {e}")
             raise 
         
-    def stream_load_from_alias(self, artifact_name: str, alias: str) -> None:
+    def stream_load_from_alias(self, artifact_name: str, alias: str) -> Tuple[BaseEstimator, float]:
         try : 
             with wandb.init(entity=self.config.entity, project=self.config.project) as run:
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    artifact = run.use_artifact(artifact_name)
+                    artifact = run.use_artifact(f"{artifact_name}:{alias}")
                     artifact.download(root = temp_dir)
-                    return joblib.load(os.path.join(temp_dir, self.config.model_file_name))
+                    return joblib.load(os.path.join(temp_dir, self.config.model_file_name)), artifact.metadata.get("pr_auc", None)
         except Exception as e:
             logger.error(f"Error downloading artifact: {e}")
             raise

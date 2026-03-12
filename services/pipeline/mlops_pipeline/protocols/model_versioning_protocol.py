@@ -2,7 +2,7 @@ from typing import Protocol, Any
 from sklearn.base import BaseEstimator
 
 class ModelVersioningProtocol(Protocol):
-    def create_and_log_model_artifact_to_run(self, model: BaseEstimator, alias: str) -> None:
+    def create_and_log_model_artifact_to_run(self, model: BaseEstimator, alias: str, metric: float) -> None:
         ...
     def create_and_log_preprocessor_artifact_to_run(self, preprocessor: BaseEstimator, alias: str) -> None:
         ...

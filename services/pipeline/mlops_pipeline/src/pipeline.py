@@ -11,7 +11,9 @@ import logging
 from typing import List
 from mlops_pipeline.src.master_tuner import MasterTuner
 from mlops_pipeline.strategies.base_strategy import BaseModelStrategy
-
+from mlops_pipeline.src.model_promotion import ModelPromotion
+from mlops_pipeline.configs.wandb_config import WandbConfig
+from mlops_pipeline.src.model_trainer import ModelTrainer
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,7 @@ class PipelineRunner:
     def __init__(self, s3_config : S3StorageConfig, settings: Settings, 
     storage_repository: StorageProtocol, model_versioning_repository: ModelVersioningProtocol, 
     transformation_config: TransformationConfig, preprocessing_config: PreprocessingConfig,
-    strategies : List[BaseModelStrategy]):
+    strategies : List[BaseModelStrategy], wandb_config: WandbConfig):
         self.s3_config = s3_config
         self.settings = settings
         self.storage_repository = storage_repository
@@ -27,6 +29,7 @@ class PipelineRunner:
         self.preprocessing_config = preprocessing_config
         self.model_versioning_repository = model_versioning_repository
         self.strategies = strategies
+        self.wandb_config = wandb_config
     
     def run(self):
         data_ingestion = DataIngestion(self.s3_config, self.storage_repository)
@@ -50,7 +53,11 @@ class PipelineRunner:
 
         self.strategies = [strategy(preprocessed_datasets) for strategy in self.strategies]
         hyperparameter_tuner = MasterTuner(strategies = self.strategies, model_versioning_repository = self.model_versioning_repository)
-        hyperparameter_tuner.start_hyperparameter_tuning()
+        best_result = hyperparameter_tuner.start_hyperparameter_tuning()
+        trainer = ModelTrainer(preprocessed_datasets, best_result, self.model_versioning_repository)
+        best_model, pr_auc_score = trainer.combine_data_and_train_model()
+        model_promotion = ModelPromotion(best_model, pr_auc_score, self.model_versioning_repository, self.wandb_config)
+        model_promotion.promote_model()
         logger.info(f"Pipeline completed successfully")
 
 
