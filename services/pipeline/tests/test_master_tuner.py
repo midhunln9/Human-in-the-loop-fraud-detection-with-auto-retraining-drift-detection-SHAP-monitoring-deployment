@@ -1,11 +1,11 @@
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
+from mlops_pipeline.schemas.hyperparameter_tuning import HyperparameterTuningResult
 
-def test_if_sklearn_model_returned(master_tuner):
-    model = master_tuner.start_hyperparameter_tuning()
-    assert isinstance(model, XGBClassifier) or isinstance(model, LGBMClassifier)
+def test_if_hyperparameter_tuning_result_returned(master_tuner):
+    result = master_tuner.start_hyperparameter_tuning()
+    assert isinstance(result, HyperparameterTuningResult)
 
-def test_metadata_of_model(master_tuner):
-    model = master_tuner.start_hyperparameter_tuning()
-    assert model.get_params() is not None
-    assert model.get_params() is not None
+def test_metadata_of_result(master_tuner):
+    result = master_tuner.start_hyperparameter_tuning()
+    assert result.name in ["xgboost", "lightgbm"]
+    assert result.best_params is not None
+    assert result.best_pr_auc_score is not None

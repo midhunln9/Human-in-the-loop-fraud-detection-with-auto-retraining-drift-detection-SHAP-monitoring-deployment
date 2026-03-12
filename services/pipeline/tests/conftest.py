@@ -13,6 +13,8 @@ import pandas as pd
 from unittest.mock import MagicMock
 from mlops_pipeline.protocols.model_versioning_protocol import ModelVersioningProtocol
 from mlops_pipeline.src.master_tuner import MasterTuner
+from mlops_pipeline.schemas.hyperparameter_tuning import HyperparameterTuningResult
+
 
 def create_sample_features_dataframe():
     n_rows = 50
@@ -104,3 +106,18 @@ def lightgbm_strategy():
 def master_tuner(xgboost_strategy, lightgbm_strategy, model_versioning_repository_mock):
     return MasterTuner(strategies=[xgboost_strategy, lightgbm_strategy], 
     model_versioning_repository=model_versioning_repository_mock)
+
+@pytest.fixture
+def hyperparameter_tuning_result():
+    return HyperparameterTuningResult(
+        name="xgboost",
+        best_params={
+            "n_estimators": 100,
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+        },
+        best_pr_auc_score=0.9,
+    )

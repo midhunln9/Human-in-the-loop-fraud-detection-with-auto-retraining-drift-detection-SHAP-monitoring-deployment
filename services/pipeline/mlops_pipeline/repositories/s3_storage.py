@@ -5,6 +5,8 @@ from io import BytesIO
 import boto3
 import pandas as pd
 import logging
+import joblib
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,4 +39,26 @@ class S3Storage(StorageProtocol):
             return dataframe
         except Exception as e:
             logger.error(f"Error downloading dataframe from S3: {e}")
+            raise 
+    
+    def upload_object(self, obj: Any, key: str) -> None:
+        try:
+            buf = BytesIO()
+            joblib.dump(obj, buf)
+            buf.seek(0)
+            self.s3_client.put_object(Bucket=self.settings.bucket, Key=key, Body=buf.getvalue())
+        except Exception as exc:
+            raise 
+    
+    def upload_html(self, file_path: str, key: str) -> None:
+        try:
+            with open(file_path, "rb") as fh:
+                self.s3_client.put_object(
+                    Bucket=self.settings.bucket,
+                    Key=key,
+                    Body=fh,
+                    ContentType="text/html",
+                )
+            logger.info("HTML uploaded to s3://%s/%s", self.settings.bucket, key)
+        except Exception as exc:
             raise 

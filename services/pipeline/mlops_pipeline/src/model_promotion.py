@@ -7,10 +7,9 @@ from sklearn.base import BaseEstimator
 logger = logging.getLogger(__name__)
 
 class ModelPromotion:
-    def __init__(self, best_model: BaseEstimator, best_pr_auc_score: float, model_versioning_repository: ModelVersioningProtocol,
-    wandb_config : WandbConfig):
-        self.best_model = best_model
-        self.best_pr_auc_score = best_pr_auc_score
+    def __init__(self, pr_auc_test : float, model_versioning_repository: ModelVersioningProtocol,
+    wandb_config : WandbConfig) -> None:
+        self.pr_auc_test = pr_auc_test
         self.model_versioning_repository = model_versioning_repository
         self.wandb_config = wandb_config
     
@@ -24,7 +23,7 @@ class ModelPromotion:
         except Exception as e:
             logger.info(f"No model in production")
 
-        if production_model is None or self.best_pr_auc_score > pr_auc_production:
+        if production_model is None or self.pr_auc_test > pr_auc_production:
             self.model_versioning_repository.promote_artifact(self.wandb_config.model_artifact_name, 
             "staging","production")
             logger.info(f"Model promoted to production successfully")

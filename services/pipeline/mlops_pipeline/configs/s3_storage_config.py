@@ -27,3 +27,6 @@ class S3StorageConfig:
     @property
     def model_key(self) -> str:
         return f"{self.pipeline_id}/models/model.joblib"
+    @property
+    def eval_report_key(self) -> str:
+        return f"{self.pipeline_id}/reports/eval_report.html"

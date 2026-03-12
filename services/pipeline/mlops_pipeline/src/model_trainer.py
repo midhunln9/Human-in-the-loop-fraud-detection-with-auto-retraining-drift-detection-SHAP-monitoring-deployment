@@ -28,7 +28,7 @@ class ModelTrainer:
             self.model_versioning_repository.create_and_log_model_artifact_to_run(best_model, alias = "staging", metric = pr_auc_score)
             logger.info(f"PR AUC score of staging model: {pr_auc_score}")
             logger.info(f"Model trained successfully with combined data")
-            return best_model, pr_auc_score
+            return best_model
         except Exception as e:
             logger.error(f"Error while instantiating best model: {e}")
             raise

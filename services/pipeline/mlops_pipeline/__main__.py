@@ -25,6 +25,7 @@ def main():
     wandb_config = WandbConfig()
     wandb_repository = WandbRepository(wandb_config)
     strategies = [XGBoostStrategy, LightGBMStrategy]
+    
     pipeline_runner = PipelineRunner(s3_config, settings, s3_storage, wandb_repository, 
     transformation_config, preprocessing_config, strategies, wandb_config)
     pipeline_runner.run()

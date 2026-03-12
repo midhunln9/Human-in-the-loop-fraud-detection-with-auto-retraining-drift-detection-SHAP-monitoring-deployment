@@ -47,9 +47,14 @@ class WandbRepository(ModelVersioningProtocol):
         try : 
             with wandb.init(entity=self.config.entity, project=self.config.project) as run:
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    artifact = run.use_artifact(f"{artifact_name}:{alias}")
-                    artifact.download(root = temp_dir)
-                    return joblib.load(os.path.join(temp_dir, self.config.model_file_name)), artifact.metadata.get("pr_auc", None)
+                    try:
+                        artifact = run.use_artifact(f"{artifact_name}:{alias}")
+                        with tempfile.TemporaryDirectory() as temp_dir:
+                            artifact.download(root = temp_dir)
+                            return joblib.load(os.path.join(temp_dir, self.config.model_file_name)), artifact.metadata.get("pr_auc", None)
+                    except wandb.errors.CommError:
+                        logger.warning(f"Artifact {artifact_name}:{alias} not found. Returning None.")
+                        return None, None
         except Exception as e:
             logger.error(f"Error downloading artifact: {e}")
             raise

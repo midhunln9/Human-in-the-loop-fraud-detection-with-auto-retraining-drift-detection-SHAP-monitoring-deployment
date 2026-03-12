@@ -14,6 +14,7 @@ from mlops_pipeline.strategies.base_strategy import BaseModelStrategy
 from mlops_pipeline.src.model_promotion import ModelPromotion
 from mlops_pipeline.configs.wandb_config import WandbConfig
 from mlops_pipeline.src.model_trainer import ModelTrainer
+from mlops_pipeline.src.model_evaluation import ModelEvaluation
 logger = logging.getLogger(__name__)
 
 
@@ -55,9 +56,17 @@ class PipelineRunner:
         hyperparameter_tuner = MasterTuner(strategies = self.strategies, model_versioning_repository = self.model_versioning_repository)
         best_result = hyperparameter_tuner.start_hyperparameter_tuning()
         trainer = ModelTrainer(preprocessed_datasets, best_result, self.model_versioning_repository)
-        best_model, pr_auc_score = trainer.combine_data_and_train_model()
-        model_promotion = ModelPromotion(best_model, pr_auc_score, self.model_versioning_repository, self.wandb_config)
+
+        best_model = trainer.combine_data_and_train_model()
+        
+        self.storage_repository.upload_object(best_model, self.s3_config.model_key)
+
+        model_evaluation = ModelEvaluation(best_model, self.storage_repository, self.s3_config, preprocessed_datasets, 1)
+        pr_auc_test = model_evaluation.evaluate()
+
+        model_promotion = ModelPromotion(pr_auc_test, self.model_versioning_repository, self.wandb_config)
         model_promotion.promote_model()
+
         logger.info(f"Pipeline completed successfully")
 
 
