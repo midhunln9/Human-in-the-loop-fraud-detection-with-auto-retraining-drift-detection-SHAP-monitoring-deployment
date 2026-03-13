@@ -12,6 +12,7 @@ import tempfile
 from sklearn.base import BaseEstimator
 import pandas as pd
 import logging
+from mlops_pipeline.exceptions import EvaluationError
 
 logger = logging.getLogger(__name__)
 
@@ -62,4 +63,4 @@ class ModelEvaluation:
             return pr_auc
         except Exception as exc:
             logger.error(f"Error evaluating model: {exc}")
-            raise
+            raise EvaluationError(f"Error evaluating model") from exc

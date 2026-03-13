@@ -7,6 +7,7 @@ from lightgbm import LGBMClassifier
 import logging
 from sklearn.metrics import average_precision_score
 from mlops_pipeline.protocols.model_versioning_protocol import ModelVersioningProtocol
+from mlops_pipeline.exceptions import TrainingError
 logger = logging.getLogger(__name__)
 
 MODELFACTORY : dict = {"xgboost": XGBClassifier, "lightgbm": LGBMClassifier}
@@ -31,5 +32,5 @@ class ModelTrainer:
             return best_model
         except Exception as e:
             logger.error(f"Error while instantiating best model: {e}")
-            raise
+            raise TrainingError(f"Error while instantiating best model") from e
 

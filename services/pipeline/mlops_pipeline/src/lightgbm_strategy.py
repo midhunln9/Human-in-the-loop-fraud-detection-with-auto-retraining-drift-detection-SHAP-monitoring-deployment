@@ -8,6 +8,7 @@ from sklearn.metrics import average_precision_score
 from mlops_pipeline.schemas.hyperparameter_tuning import HyperparameterTuningResult
 from mlops_pipeline.strategies.base_strategy import BaseModelStrategy
 from mlops_pipeline.schemas.data import PreprocessedDatasets
+from mlops_pipeline.exceptions import TuningError
 
 
 logger = logging.getLogger(__name__)
@@ -55,24 +56,28 @@ class LightGBMStrategy(BaseModelStrategy):
         return average_precision_score(self.data.y_val, preds)
 
     def start_hyperparameter_tuning(self, trials : int = 100) -> HyperparameterTuningResult:
-        logger.info("LightGBM hyperparameter tuning started")
+        try:
+            logger.info("LightGBM hyperparameter tuning started")
 
-        study = optuna.create_study(direction="maximize")
-        study.optimize(self.objective, n_trials = trials)
+            study = optuna.create_study(direction="maximize")
+            study.optimize(self.objective, n_trials = trials)
 
-        best_trial = study.best_trial
-        best_params = best_trial.params.copy()
-        best_params.update({
-            "n_estimators": best_trial.user_attrs["best_iteration"],
-            "objective": "binary",
-            "n_jobs": -1,
-            "random_state": 42,
-            "scale_pos_weight": self.scale_pos_weight,
-            "verbosity": -1,
-        })
+            best_trial = study.best_trial
+            best_params = best_trial.params.copy()
+            best_params.update({
+                "n_estimators": best_trial.user_attrs["best_iteration"],
+                "objective": "binary",
+                "n_jobs": -1,
+                "random_state": 42,
+                "scale_pos_weight": self.scale_pos_weight,
+                "verbosity": -1,
+            })
 
-        logger.info("LightGBM tuning complete — best PR-AUC: %.4f", study.best_value)
-
+            logger.info("LightGBM tuning complete — best PR-AUC: %.4f", study.best_value)
+        except Exception as e:
+            logger.error(f"Error starting hyperparameter tuning: {e}")
+            raise TuningError(f"Error starting hyperparameter tuning") from e
+            
         return HyperparameterTuningResult(
             name="lightgbm",
             best_params=best_params,

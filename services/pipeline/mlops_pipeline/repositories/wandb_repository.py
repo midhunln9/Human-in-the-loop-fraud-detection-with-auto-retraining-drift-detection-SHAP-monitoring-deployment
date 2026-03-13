@@ -7,6 +7,7 @@ import os
 import joblib
 import logging
 from typing import Tuple
+from mlops_pipeline.exceptions import ArtifactError
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class WandbRepository(ModelVersioningProtocol):
             logger.info(f"Model artifact created and logged successfully")
         except Exception as e:
             logger.error(f"Error creating and logging model artifact: {e}")
-            raise 
+            raise ArtifactError(f"Error creating and logging model artifact") from e
     
     def create_and_log_preprocessor_artifact_to_run(self, preprocessor: BaseEstimator, alias: str) -> None:
         try : 
@@ -41,7 +42,7 @@ class WandbRepository(ModelVersioningProtocol):
             logger.info(f"Preprocessor artifact created and logged successfully")
         except Exception as e:
             logger.error(f"Error creating and logging preprocessor artifact: {e}")
-            raise 
+            raise ArtifactError(f"Error creating and logging preprocessor artifact") from e
         
     def stream_load_from_alias(self, artifact_name: str, alias: str) -> Tuple[BaseEstimator, float]:
         try : 
@@ -57,7 +58,7 @@ class WandbRepository(ModelVersioningProtocol):
                         return None, None
         except Exception as e:
             logger.error(f"Error downloading artifact: {e}")
-            raise
+            raise ArtifactError(f"Error downloading artifact") from e
     
     def promote_artifact(self, artifact_name: str, from_alias: str, to_alias: str) -> None:
         try : 
@@ -70,4 +71,4 @@ class WandbRepository(ModelVersioningProtocol):
             logger.info(f"Artifact promoted successfully")
         except Exception as e:
             logger.error(f"Error promoting artifact: {e}")
-            raise 
+            raise ArtifactError(f"Error promoting artifact") from e

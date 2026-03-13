@@ -32,3 +32,6 @@ class StorageError(PipelineError):
 
 class ArtifactError(PipelineError):
     """Raised when artifact repository operations fail."""
+
+class TrainingError(PipelineError):
+    """Raised when model training fails."""

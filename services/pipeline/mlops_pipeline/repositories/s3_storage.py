@@ -1,5 +1,6 @@
 from mlops_pipeline.protocols.storage_protocol import StorageProtocol
 from mlops_pipeline.settings import Settings
+from mlops_pipeline.exceptions import StorageError
 
 from io import BytesIO
 import boto3
@@ -29,7 +30,7 @@ class S3Storage(StorageProtocol):
             logger.info(f"Dataframe uploaded to S3: {key}")
         except Exception as e:
             logger.error(f"Error uploading dataframe to S3: {e}")
-            raise 
+            raise StorageError(f"Error uploading dataframe to S3") from e
 
     def stream_download_dataframe(self, key: str) -> pd.DataFrame:
         try:
@@ -39,7 +40,7 @@ class S3Storage(StorageProtocol):
             return dataframe
         except Exception as e:
             logger.error(f"Error downloading dataframe from S3: {e}")
-            raise 
+            raise StorageError(f"Error downloading dataframe from S3") from e
     
     def upload_object(self, obj: Any, key: str) -> None:
         try:
@@ -48,7 +49,7 @@ class S3Storage(StorageProtocol):
             buf.seek(0)
             self.s3_client.put_object(Bucket=self.settings.bucket, Key=key, Body=buf.getvalue())
         except Exception as exc:
-            raise 
+            raise StorageError(f"Error uploading object to S3") from exc
     
     def upload_html(self, file_path: str, key: str) -> None:
         try:
@@ -61,4 +62,4 @@ class S3Storage(StorageProtocol):
                 )
             logger.info("HTML uploaded to s3://%s/%s", self.settings.bucket, key)
         except Exception as exc:
-            raise 
+            raise StorageError(f"Error uploading HTML to S3") from exc

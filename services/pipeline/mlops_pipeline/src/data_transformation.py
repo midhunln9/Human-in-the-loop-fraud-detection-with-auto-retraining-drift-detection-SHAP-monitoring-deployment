@@ -23,7 +23,7 @@ class DataTransformation:
             logger.info(f"Target column dropped successfully")
         except Exception as e:
             logger.error(f"Error dropping target column: {e}")
-            raise ValueError(f"check the target column: {self.config.target_column}") from e
+            raise TransformationError(f"check the target column: {self.config.target_column}") from e
         y = df[self.config.target_column]
         logger.info(f"Splitting data into train, validation and test sets")
         X_train, X_temp, y_train, y_temp = train_test_split(

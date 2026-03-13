@@ -6,6 +6,7 @@ import logging
 from mlops_pipeline.protocols.model_versioning_protocol import ModelVersioningProtocol
 from mlops_pipeline.strategies.base_strategy import BaseModelStrategy
 from mlops_pipeline.schemas.hyperparameter_tuning import HyperparameterTuningResult
+from mlops_pipeline.exceptions import TuningError
 logger = logging.getLogger(__name__)
 
 
@@ -16,9 +17,15 @@ class MasterTuner:
         self.model_versioning_repository = model_versioning_repository
 
     def start_hyperparameter_tuning(self) -> HyperparameterTuningResult:
-        for strategy in self.strategies:
-            result = strategy.start_hyperparameter_tuning()
-            self.results.append(result)
-        best_result = max(self.results, key=lambda x: x.best_pr_auc_score)
-        return best_result
+        try:
+            for strategy in self.strategies:
+                result = strategy.start_hyperparameter_tuning()
+                self.results.append(result)
+            best_result = max(self.results, key=lambda x: x.best_pr_auc_score)
+            return best_result
+        except TuningError as e:
+            raise
+        except Exception as e:
+            logger.error(f"Error starting hyperparameter tuning: {e}")
+            raise TuningError(f"Error starting hyperparameter tuning") from e
         

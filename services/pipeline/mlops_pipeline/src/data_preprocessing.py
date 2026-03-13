@@ -7,6 +7,7 @@ from mlops_pipeline.schemas.data import SplitDatasets, PreprocessedDatasets
 from mlops_pipeline.configs.preprocessing_config import PreprocessingConfig
 from mlops_pipeline.protocols.model_versioning_protocol import ModelVersioningProtocol
 import logging
+from mlops_pipeline.exceptions import PreprocessingError
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class DataPreprocessing:
             self.repository.create_and_log_preprocessor_artifact_to_run(preprocessor, "staging")
         except Exception as e:
             logger.error(f"Error creating and logging preprocessor artifact: {e}")
-            raise
+            raise PreprocessingError(f"Error creating and logging preprocessor artifact") from e
 
         logger.info("successfully stored the preprocessed data inside the schema")
 

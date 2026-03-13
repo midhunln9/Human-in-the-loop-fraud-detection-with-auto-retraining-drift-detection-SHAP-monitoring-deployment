@@ -26,5 +26,5 @@ class DataIngestion:
             return df
         except Exception as e:
             logger.error(f"Error ingesting data: {e}")
-            raise 
+            raise IngestionError(f"Error ingesting data from S3") from e
     
