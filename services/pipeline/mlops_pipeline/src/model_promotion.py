@@ -27,6 +27,8 @@ class ModelPromotion:
             if production_model is None or self.pr_auc_test > pr_auc_production:
                 self.model_versioning_repository.promote_artifact(self.wandb_config.model_artifact_name, 
                 "staging","production")
+                self.model_versioning_repository.promote_artifact(self.wandb_config.preprocessor_artifact_name,
+                "staging","production") 
                 logger.info(f"Model promoted to production successfully")
             else:
                 logger.info(f"Best staging model is not better than production model")

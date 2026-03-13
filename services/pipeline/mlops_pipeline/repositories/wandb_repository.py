@@ -45,30 +45,28 @@ class WandbRepository(ModelVersioningProtocol):
             raise ArtifactError(f"Error creating and logging preprocessor artifact") from e
         
     def stream_load_from_alias(self, artifact_name: str, alias: str) -> Tuple[BaseEstimator, float]:
-        try : 
+        try: 
             with wandb.init(entity=self.config.entity, project=self.config.project) as run:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    try:
-                        artifact = run.use_artifact(f"{artifact_name}:{alias}")
-                        with tempfile.TemporaryDirectory() as temp_dir:
-                            artifact.download(root = temp_dir)
-                            return joblib.load(os.path.join(temp_dir, self.config.model_file_name)), artifact.metadata.get("pr_auc", None)
-                    except wandb.errors.CommError:
-                        logger.warning(f"Artifact {artifact_name}:{alias} not found. Returning None.")
-                        return None, None
+                try:
+                    artifact = run.use_artifact(f"{artifact_name}:{alias}")
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        artifact.download(root=temp_dir)
+                        return joblib.load(os.path.join(temp_dir, self.config.model_file_name)), artifact.metadata.get("pr_auc", None)
+                except wandb.errors.CommError:
+                    logger.warning(f"Artifact {artifact_name}:{alias} not found. Returning None.")
         except Exception as e:
             logger.error(f"Error downloading artifact: {e}")
             raise ArtifactError(f"Error downloading artifact") from e
-    
+        
     def promote_artifact(self, artifact_name: str, from_alias: str, to_alias: str) -> None:
-        try : 
-            with wandb.init(entity=self.config.entity, project=self.config.project) as run:
-                artifact = run.use_artifact(f"{artifact_name}:{from_alias}")
-                artifact.aliases.append(to_alias)
-                if from_alias in artifact.aliases:
-                    artifact.aliases.remove(from_alias)
-                artifact.save()
-            logger.info(f"Artifact promoted successfully")
+        try:
+            api = wandb.Api()
+            artifact = api.artifact(f"{self.config.entity}/{self.config.project}/{artifact_name}:{from_alias}")
+            artifact.aliases.append(to_alias)
+            if from_alias in artifact.aliases:
+                artifact.aliases.remove(from_alias)
+            artifact.save()
+            logger.info(f"Artifact promoted from {from_alias} to {to_alias}")
         except Exception as e:
             logger.error(f"Error promoting artifact: {e}")
             raise ArtifactError(f"Error promoting artifact") from e
