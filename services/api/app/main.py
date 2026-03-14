@@ -10,6 +10,9 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
+from app.utils.logger import setup_logging
+import logging
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(env_path, override=True)
@@ -38,14 +41,21 @@ def load_model(project_name : str, entity : str, artifact_name : str, file_name 
 @asynccontextmanager
 async def on_start_up(app: FastAPI):
     try:
+        setup_logging()
         secrets = load_app_secrets()
+        logger = logging.getLogger(__name__)
+        logger.info("successfully loaded the secrets")
         app.state.model = load_model(project_name=secrets["wandb_project"], entity=secrets["wandb_entity"], artifact_name=secrets["model_artifact_name"], file_name=secrets["model_file_name"])
+        logger.info("successfully loaded the model")
         app.state.preprocessor = load_model(project_name=secrets["wandb_project"], entity=secrets["wandb_entity"], artifact_name=secrets["preprocessor_artifact_name"], file_name=secrets["preprocessor_file_name"])
+        logger.info("successfully loaded the preprocessor")
         if app.state.model is None or app.state.preprocessor is None:
             raise RuntimeError("Error when loading model or preprocessor")
     except Exception as e:
+        logger.error(f"Error starting or shutting down the application: {e}")
         raise RuntimeError("Error starting or shutting down the application") from e
     yield
+    logger.info("successfull shut down")
     
 
 app = FastAPI(title="Credit Card Fraud Detection API", 
