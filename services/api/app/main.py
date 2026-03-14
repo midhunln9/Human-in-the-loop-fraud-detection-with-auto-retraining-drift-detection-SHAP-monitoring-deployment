@@ -40,10 +40,10 @@ def load_model(project_name : str, entity : str, artifact_name : str, file_name 
 
 @asynccontextmanager
 async def on_start_up(app: FastAPI):
+    setup_logging()
+    logger = logging.getLogger(__name__)
     try:
-        setup_logging()
         secrets = load_app_secrets()
-        logger = logging.getLogger(__name__)
         logger.info("successfully loaded the secrets")
         app.state.model = load_model(project_name=secrets["wandb_project"], entity=secrets["wandb_entity"], artifact_name=secrets["model_artifact_name"], file_name=secrets["model_file_name"])
         logger.info("successfully loaded the model")

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 @router.post("/predict")
 async def predict(real_time_prediction_request: RealTimePredictionRequest, request: Request):
-    logger.info("payload received for rela time prediction")
+    logger.info("payload received for real time prediction")
     model = request.app.state.model
     if model is None:
         logger.error("model not loaded")
@@ -27,9 +27,6 @@ async def predict(real_time_prediction_request: RealTimePredictionRequest, reque
 async def batch_predict(batch_prediction_request: BatchPredictionRequest, request: Request):
     logger.info("payload received for batch prediction")
     model = request.app.state.model
-    if model is None:
-        logger.error("model not loaded")
-        raise HTTPException(status_code=500, detail="Model not loaded")
     if model is None:
         logger.error("model not loaded")
         raise HTTPException(status_code=500, detail="Model not loaded")

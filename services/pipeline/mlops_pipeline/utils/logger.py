@@ -11,6 +11,7 @@ def setup_logging():
 
   logger = logging.getLogger("mlops_pipeline")
   logger.setLevel(logging.INFO)
+  logger.propagate = False
 
   if logger.handlers:
       return  
