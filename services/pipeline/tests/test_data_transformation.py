@@ -1,5 +1,6 @@
 from mlops_pipeline.src.data_transformation import DataTransformation
 from mlops_pipeline.configs.transformation_config import TransformationConfig
+from mlops_pipeline.exceptions import TransformationError
 from mlops_pipeline.schemas.data import SplitDatasets
 import pandas as pd
 import pytest
@@ -27,6 +28,6 @@ def test_wrong_target_columns(transformation_config):
         "Feature2": [i for i in range(10)],
         "target": [0 if i % 2 == 0 else 1 for i in range(10)]
     })
-    with pytest.raises(ValueError, match = f"check the target column: {transformation_config.target_column}"):
+    with pytest.raises(TransformationError, match=f"check the target column: {transformation_config.target_column}"):
         result = data_transformation.transform_data(df)
 
