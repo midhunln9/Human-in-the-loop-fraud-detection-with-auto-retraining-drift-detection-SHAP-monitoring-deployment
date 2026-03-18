@@ -32,7 +32,9 @@ The IAM user associated with the access keys needs the following permissions to 
                 "ecr:InitiateLayerUpload",
                 "ecr:UploadLayerPart",
                 "ecr:CompleteLayerUpload",
-                "ecr:PutImage"
+                "ecr:PutImage",
+                "ecr:CreateRepository",
+                "ecr:DescribeRepositories"
             ],
             "Resource": "*"
         }
@@ -42,7 +44,7 @@ The IAM user associated with the access keys needs the following permissions to 
 
 ### Setting Up ECR Repositories
 
-Before running the workflow, create the ECR repositories in AWS:
+The workflow will automatically create the ECR repositories if they don't exist. However, if you prefer to create them manually beforehand, you can use:
 
 ```bash
 aws ecr create-repository --repository-name fraud-detection-api --region us-east-1
