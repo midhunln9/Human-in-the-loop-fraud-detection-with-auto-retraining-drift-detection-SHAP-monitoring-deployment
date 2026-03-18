@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from app.routes.prediction_endpoints import router
 from contextlib import asynccontextmanager
 import wandb
 import tempfile
@@ -16,6 +15,8 @@ import logging
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(env_path, override=True)
+
+from app.routes.prediction_endpoints import router
 
 def load_app_secrets(secret_name: str = "fraud_detection/api", region_name: str = "eu-north-1") -> dict:
     client = boto3.client("secretsmanager", region_name=region_name,

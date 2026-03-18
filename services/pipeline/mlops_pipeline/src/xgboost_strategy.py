@@ -10,13 +10,40 @@ logger = logging.getLogger(__name__)
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
+
 class XGBoostStrategy(BaseModelStrategy):
-    def __init__(self, datasets : PreprocessedDatasets):
+    """XGBoost model training strategy with hyperparameter tuning.
+
+    This class implements the BaseModelStrategy for XGBoost classifier,
+    providing Optuna-based hyperparameter optimization with early stopping.
+
+    Attributes:
+        data: The preprocessed datasets for training and validation.
+        scale_pos_weight: The class imbalance ratio for handling imbalanced data.
+    """
+
+    def __init__(self, datasets: PreprocessedDatasets):
+        """Initialize the XGBoost strategy with preprocessed data.
+
+        Args:
+            datasets: The preprocessed datasets containing train, validation, and test splits.
+        """
         self.data = datasets
         self.scale_pos_weight = (datasets.y_train.squeeze().value_counts()[0] / datasets.y_train.squeeze().value_counts()[1])
         logger.info(f"Scale pos weight: {self.scale_pos_weight}")
 
     def objective(self, trial) -> float:
+        """Define the Optuna objective function for XGBoost hyperparameter tuning.
+
+        Suggests hyperparameters, trains a model with early stopping, and returns
+        the validation PR-AUC score.
+
+        Args:
+            trial: The Optuna trial object for hyperparameter suggestion.
+
+        Returns:
+            The average precision (PR-AUC) score on the validation set.
+        """
         params = {
             "max_depth": trial.suggest_int("max_depth", 3, 10),
             "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1, log=True),
@@ -50,7 +77,16 @@ class XGBoostStrategy(BaseModelStrategy):
         preds = model.predict_proba(self.data.X_val)[:, 1]
         return average_precision_score(self.data.y_val, preds)
 
-    def start_hyperparameter_tuning(self, trials : int = 100):
+    def start_hyperparameter_tuning(self, trials: int = 100) -> HyperparameterTuningResult:
+        """Execute hyperparameter tuning for XGBoost using Optuna.
+
+        Args:
+            trials: The number of Optuna trials to run for optimization.
+
+        Returns:
+            A HyperparameterTuningResult containing the best hyperparameters
+            and the corresponding PR-AUC score.
+        """
         logger.info("XGBoost hyperparameter tuning started")
 
         study = optuna.create_study(direction="maximize")

@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+
+# Jupyter notebooks
+api_payload_test/
+*.ipynb
+
+# Environment variables
+.env
+
+# Git
+.git/
+.gitignore
+
+# Docker itself (optional)
+Dockerfile
+.dockerignore
+
+# Misc
+*.log
+
+#testing api_payload_test
+api_payload_test/

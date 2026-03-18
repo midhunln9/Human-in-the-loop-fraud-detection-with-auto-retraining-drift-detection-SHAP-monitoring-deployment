@@ -10,11 +10,26 @@ from mlops_pipeline.repositories.wandb_repository import WandbRepository
 from mlops_pipeline.configs.wandb_config import WandbConfig
 from mlops_pipeline.src.xgboost_strategy import XGBoostStrategy
 from mlops_pipeline.src.lightgbm_strategy import LightGBMStrategy
-from mlops_pipeline.schemas.data import PreprocessedDatasets
 
 
 
-def main():
+def main() -> None:
+    """Entry point for the MLOps pipeline.
+
+    Initializes logging, loads environment variables, configures all
+    pipeline components (storage, versioning, strategies), and executes
+    the complete MLOps pipeline.
+
+    Pipeline steps:
+    1. Setup logging and load environment variables
+    2. Initialize settings and repositories
+    3. Configure data transformation and preprocessing
+    4. Instantiate model strategies (XGBoost, LightGBM)
+    5. Create and run the pipeline runner
+
+    Returns:
+        None
+    """
     setup_logging()
     load_dotenv(find_dotenv())
     settings = Settings()
@@ -25,11 +40,11 @@ def main():
     wandb_config = WandbConfig()
     wandb_repository = WandbRepository(wandb_config)
     strategies = [XGBoostStrategy, LightGBMStrategy]
-    
-    pipeline_runner = PipelineRunner(s3_config, settings, s3_storage, wandb_repository, 
-    transformation_config, preprocessing_config, strategies, wandb_config)
+
+    pipeline_runner = PipelineRunner(s3_config, settings, s3_storage, wandb_repository,
+                                     transformation_config, preprocessing_config, strategies, wandb_config)
     pipeline_runner.run()
-    
+
 
 if __name__ == "__main__":
     main()

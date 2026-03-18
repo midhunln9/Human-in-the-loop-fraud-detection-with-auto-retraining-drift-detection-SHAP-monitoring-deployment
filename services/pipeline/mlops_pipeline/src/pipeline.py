@@ -22,10 +22,39 @@ logger = logging.getLogger(__name__)
 
 
 class PipelineRunner:
-    def __init__(self, s3_config : S3StorageConfig, settings: Settings, 
-    storage_repository: StorageProtocol, model_versioning_repository: ModelVersioningProtocol, 
-    transformation_config: TransformationConfig, preprocessing_config: PreprocessingConfig,
-    strategies : List[BaseModelStrategy], wandb_config: WandbConfig):
+    """Orchestrates the complete MLOps pipeline execution.
+
+    This class manages the end-to-end machine learning pipeline including
+    data ingestion, transformation, preprocessing, hyperparameter tuning,
+    model training, evaluation, and promotion.
+
+    Attributes:
+        s3_config: Configuration for S3 storage paths and keys.
+        settings: Application settings including credentials.
+        storage_repository: Storage protocol implementation for S3 operations.
+        transformation_config: Configuration for data transformation.
+        preprocessing_config: Configuration for data preprocessing.
+        model_versioning_repository: Model versioning protocol implementation.
+        strategies: List of model strategy classes for hyperparameter tuning.
+        wandb_config: Weights & Biases configuration for model versioning.
+    """
+
+    def __init__(self, s3_config: S3StorageConfig, settings: Settings,
+                 storage_repository: StorageProtocol, model_versioning_repository: ModelVersioningProtocol,
+                 transformation_config: TransformationConfig, preprocessing_config: PreprocessingConfig,
+                 strategies: List[BaseModelStrategy], wandb_config: WandbConfig):
+        """Initialize the PipelineRunner with all required configurations and repositories.
+
+        Args:
+            s3_config: S3 storage configuration for data and model paths.
+            settings: Application settings containing AWS and W&B credentials.
+            storage_repository: Storage implementation for S3 operations.
+            model_versioning_repository: Model versioning implementation for artifact management.
+            transformation_config: Configuration for train/test/validation splitting.
+            preprocessing_config: Configuration for feature preprocessing.
+            strategies: List of model strategy classes to evaluate.
+            wandb_config: Weights & Biases configuration for artifact logging.
+        """
         self.s3_config = s3_config
         self.settings = settings
         self.storage_repository = storage_repository
@@ -34,8 +63,26 @@ class PipelineRunner:
         self.model_versioning_repository = model_versioning_repository
         self.strategies = strategies
         self.wandb_config = wandb_config
-    
+
     def run(self):
+        """Execute the complete MLOps pipeline.
+
+        Runs all pipeline stages sequentially:
+        1. Data ingestion from S3
+        2. Data transformation (train/test/validation split)
+        3. Data preprocessing (scaling, imputation)
+        4. Upload preprocessed data to S3
+        5. Hyperparameter tuning with multiple strategies
+        6. Model training on combined data
+        7. Upload trained model to S3
+        8. Model evaluation with Evidently reports
+        9. Model promotion to production
+
+        Logs timing information for each stage.
+
+        Returns:
+            None
+        """
         # step 0 : ingest data from S3
         t_start = time.perf_counter()
         data_ingestion = DataIngestion(self.s3_config, self.storage_repository)

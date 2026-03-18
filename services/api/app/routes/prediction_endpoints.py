@@ -3,9 +3,19 @@ from app.schemas.real_time_prediction import RealTimePredictionRequest
 from app.schemas.batch_prediction import BatchPredictionRequest
 import pandas as pd 
 import logging
+import boto3
+from app.sns_publish import SNSPublish
+import os
+
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
+
+sns_publish = SNSPublish(aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"), 
+aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"), 
+region_name=os.getenv("AWS_REGION"),
+aws_sns_arn=os.getenv("AWS_SNS_ARN"))
+
 
 @router.post("/predict")
 async def predict(real_time_prediction_request: RealTimePredictionRequest, request: Request):
@@ -20,6 +30,16 @@ async def predict(real_time_prediction_request: RealTimePredictionRequest, reque
     prediction = model.predict(df_preprocessed)
     logger.info("prediction made successfully")
     probability = model.predict_proba(df_preprocessed)[:,1]
+
+    features = list(real_time_prediction_request.model_dump().values())
+    pred_label = int(prediction[0])
+
+    payload = {
+        "features": features,
+        "prediction": pred_label
+    }
+    sns_publish.publish(message = payload)
+
     logger.info("probability calculated successfully")
     return {"prediction": int(prediction[0]), "probability": float(probability[0])}
 

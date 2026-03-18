@@ -11,8 +11,24 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class S3Storage(StorageProtocol):
+    """S3 storage implementation of the StorageProtocol.
+
+    This class provides S3-based storage operations for dataframes, objects,
+    and HTML reports used throughout the MLOps pipeline.
+
+    Attributes:
+        settings: Application settings containing AWS credentials and configuration.
+        s3_client: Boto3 S3 client instance for interacting with S3.
+    """
+
     def __init__(self, settings: Settings):
+        """Initialize the S3Storage with application settings.
+
+        Args:
+            settings: The application settings containing AWS credentials and bucket name.
+        """
         self.settings = settings
         self.s3_client = boto3.client(
             "s3",
@@ -22,7 +38,19 @@ class S3Storage(StorageProtocol):
         )
 
     def stream_upload_dataframe(self, dataframe: pd.DataFrame, key: str) -> None:
-        try:    
+        """Upload a pandas DataFrame to S3 as a CSV file.
+
+        Args:
+            dataframe: The DataFrame to upload.
+            key: The S3 key (path) where the DataFrame should be saved.
+
+        Raises:
+            StorageError: If the upload operation fails.
+
+        Returns:
+            None
+        """
+        try:
             csv_buffer = BytesIO()
             dataframe.to_csv(csv_buffer, index=False)
             csv_buffer.seek(0)
@@ -33,6 +61,17 @@ class S3Storage(StorageProtocol):
             raise StorageError(f"Error uploading dataframe to S3") from e
 
     def stream_download_dataframe(self, key: str) -> pd.DataFrame:
+        """Download a pandas DataFrame from S3.
+
+        Args:
+            key: The S3 key (path) of the DataFrame to download.
+
+        Returns:
+            The downloaded DataFrame.
+
+        Raises:
+            StorageError: If the download operation fails.
+        """
         try:
             response = self.s3_client.get_object(Bucket=self.settings.bucket, Key=key)
             dataframe = pd.read_csv(response['Body'], sep=',')
@@ -43,6 +82,18 @@ class S3Storage(StorageProtocol):
             raise StorageError(f"Error downloading dataframe from S3") from e
     
     def upload_object(self, obj: Any, key: str) -> None:
+        """Upload a Python object to S3 using joblib serialization.
+
+        Args:
+            obj: The Python object to upload (typically a trained model).
+            key: The S3 key (path) where the object should be saved.
+
+        Raises:
+            StorageError: If the upload operation fails.
+
+        Returns:
+            None
+        """
         try:
             buf = BytesIO()
             joblib.dump(obj, buf)
@@ -52,6 +103,18 @@ class S3Storage(StorageProtocol):
             raise StorageError(f"Error uploading object to S3") from exc
     
     def upload_html(self, file_path: str, key: str) -> None:
+        """Upload an HTML file to S3.
+
+        Args:
+            file_path: The local file path to the HTML file to upload.
+            key: The S3 key (path) where the HTML should be saved.
+
+        Raises:
+            StorageError: If the upload operation fails.
+
+        Returns:
+            None
+        """
         try:
             with open(file_path, "rb") as fh:
                 self.s3_client.put_object(

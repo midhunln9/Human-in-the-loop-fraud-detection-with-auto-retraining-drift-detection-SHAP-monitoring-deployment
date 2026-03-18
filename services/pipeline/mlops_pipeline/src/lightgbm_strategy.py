@@ -15,13 +15,39 @@ logger = logging.getLogger(__name__)
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-class LightGBMStrategy(BaseModelStrategy):
 
-    def __init__(self, datasets : PreprocessedDatasets) -> None:
+class LightGBMStrategy(BaseModelStrategy):
+    """LightGBM model training strategy with hyperparameter tuning.
+
+    This class implements the BaseModelStrategy for LightGBM classifier,
+    providing Optuna-based hyperparameter optimization with early stopping.
+
+    Attributes:
+        data: The preprocessed datasets for training and validation.
+        scale_pos_weight: The class imbalance ratio for handling imbalanced data.
+    """
+
+    def __init__(self, datasets: PreprocessedDatasets) -> None:
+        """Initialize the LightGBM strategy with preprocessed data.
+
+        Args:
+            datasets: The preprocessed datasets containing train, validation, and test splits.
+        """
         self.data = datasets
         self.scale_pos_weight = (datasets.y_train.squeeze().value_counts()[0] / datasets.y_train.squeeze().value_counts()[1])
         
     def objective(self, trial) -> float:
+        """Define the Optuna objective function for LightGBM hyperparameter tuning.
+
+        Suggests hyperparameters, trains a model with early stopping, and returns
+        the validation PR-AUC score.
+
+        Args:
+            trial: The Optuna trial object for hyperparameter suggestion.
+
+        Returns:
+            The average precision (PR-AUC) score on the validation set.
+        """
         params = {
             "max_depth": trial.suggest_int("max_depth", -1, 10),
             "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1, log=True),
@@ -55,12 +81,24 @@ class LightGBMStrategy(BaseModelStrategy):
         preds = model.predict_proba(self.data.X_val)[:, 1]
         return average_precision_score(self.data.y_val, preds)
 
-    def start_hyperparameter_tuning(self, trials : int = 100) -> HyperparameterTuningResult:
+    def start_hyperparameter_tuning(self, trials: int = 100) -> HyperparameterTuningResult:
+        """Execute hyperparameter tuning for LightGBM using Optuna.
+
+        Args:
+            trials: The number of Optuna trials to run for optimization.
+
+        Returns:
+            A HyperparameterTuningResult containing the best hyperparameters
+            and the corresponding PR-AUC score.
+
+        Raises:
+            TuningError: If the hyperparameter tuning process fails.
+        """
         try:
             logger.info("LightGBM hyperparameter tuning started")
 
             study = optuna.create_study(direction="maximize")
-            study.optimize(self.objective, n_trials = trials)
+            study.optimize(self.objective, n_trials=trials)
 
             best_trial = study.best_trial
             best_params = best_trial.params.copy()
@@ -77,7 +115,7 @@ class LightGBMStrategy(BaseModelStrategy):
         except Exception as e:
             logger.error(f"Error starting hyperparameter tuning: {e}")
             raise TuningError(f"Error starting hyperparameter tuning") from e
-            
+
         return HyperparameterTuningResult(
             name="lightgbm",
             best_params=best_params,
