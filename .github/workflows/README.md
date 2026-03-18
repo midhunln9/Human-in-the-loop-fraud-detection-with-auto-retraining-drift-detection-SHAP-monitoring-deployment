@@ -1,6 +1,15 @@
 # CI/CD Setup Guide
 
-This GitHub Actions workflow automatically builds and pushes Docker images for the API and Pipeline services to Amazon ECR.
+This GitHub Actions workflow automatically tests, builds, and pushes Docker images for the API and Pipeline services to Amazon ECR.
+
+## Workflow Overview
+
+The workflow consists of four jobs that run in sequence:
+
+1. **test-api** - Runs unit and integration tests for the API service
+2. **test-pipeline** - Runs tests for the Pipeline service
+3. **build-and-push-api** - Builds and pushes the API Docker image (depends on test-api)
+4. **build-and-push-pipeline** - Builds and pushes the Pipeline Docker image (depends on test-pipeline)
 
 ## GitHub Secrets Required
 
@@ -51,6 +60,20 @@ aws ecr create-repository --repository-name fraud-detection-api --region us-east
 aws ecr create-repository --repository-name fraud-detection-pipeline --region us-east-1
 ```
 
+## Test Jobs
+
+### API Service Tests
+- **Location**: `services/api/`
+- **Python Version**: 3.12
+- **Command**: `pytest -v`
+- **Dependencies**: Installed via `pip install -e .`
+
+### Pipeline Service Tests
+- **Location**: `services/pipeline/`
+- **Python Version**: 3.12
+- **Command**: `pytest -v`
+- **Dependencies**: Installed via `pip install -e .`
+
 ## Docker Image Naming
 
 | Service | ECR Repository | Tags |
@@ -60,8 +83,30 @@ aws ecr create-repository --repository-name fraud-detection-pipeline --region us
 
 ## Workflow Behavior
 
-- **Pull Requests**: Builds the Docker images but does NOT push to ECR
-- **Push to main**: Builds and pushes images to ECR with both `latest` and commit SHA tags
+| Event | Tests | Push to ECR |
+|-------|-------|-------------|
+| **Pull Request to main** | Runs | No (builds only) |
+| **Push to main** | Runs | Yes (pushes both tags) |
+
+- Tests always run on both pull requests and pushes to main
+- Docker images are only pushed to ECR when code is merged/pushed to the `main` branch
+- On pull requests, images are built but not pushed (verifies build succeeds)
+
+## Job Dependencies
+
+```
+test-api ---------> build-and-push-api
+                          |
+                          v
+                    (pushes to ECR)
+
+test-pipeline -----> build-and-push-pipeline
+                          |
+                          v
+                    (pushes to ECR)
+```
+
+Build jobs only run if their corresponding test jobs pass successfully.
 
 ## Manual Trigger
 
