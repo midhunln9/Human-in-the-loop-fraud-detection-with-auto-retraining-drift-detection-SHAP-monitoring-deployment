@@ -12,8 +12,59 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
+  test-api:
+    name: Test API Service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+
+      - name: Run tests
+        run: |
+          pytest -v
+
+  test-pipeline:
+    name: Test Pipeline Service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/pipeline
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+
+      - name: Run tests
+        run: |
+          pytest -v
+
   build-and-push-api:
     name: Build and Push API Service
+    needs: test-api
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -55,6 +106,7 @@ jobs:
 
   build-and-push-pipeline:
     name: Build and Push Pipeline Service
+    needs: test-pipeline
     runs-on: ubuntu-latest
     defaults:
       run:
