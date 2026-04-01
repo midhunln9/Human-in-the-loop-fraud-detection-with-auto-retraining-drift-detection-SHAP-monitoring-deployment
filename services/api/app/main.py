@@ -13,12 +13,12 @@ from app.utils.logger import setup_logging
 import logging
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-env_path = os.path.join(BASE_DIR, ".env")
+env_path = os.path.join("/Users/midhunln/Documents/Human-in-the-loop-fraud-detection-with-auto-retraining-drift-detection-SHAP-monitoring-deployment/services/api/api.env")
 load_dotenv(env_path, override=True)
 
 from app.routes.prediction_endpoints import router
 
-def load_app_secrets(secret_name: str = "fraud_detection/api", region_name: str = "eu-north-1") -> dict:
+def load_app_secrets(secret_name: str = "fraud_detection/api", region_name: str = "ap-south-1") -> dict:
     client = boto3.client("secretsmanager", region_name=region_name,
     aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"))
