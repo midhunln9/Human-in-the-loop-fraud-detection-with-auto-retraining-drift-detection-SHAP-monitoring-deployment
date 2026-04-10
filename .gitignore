@@ -209,3 +209,5 @@ __marimo__/
 # .env
 api.env
 pipeline.env
+
+/dataset
