@@ -1,0 +1,3 @@
+evidently
+pandas
+psycopg2-binary

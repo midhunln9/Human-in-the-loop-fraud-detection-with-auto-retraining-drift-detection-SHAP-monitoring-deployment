@@ -19,7 +19,7 @@ class WandbConfig:
         model_artifact_type: Type classification for model artifacts.
     """
 
-    entity: str = "midhunln23-"
+    entity: str = "midhun61025-student"
     project: str = "mlops-fraud-detection"
     preprocessor_file_name: str = "preprocessor.joblib"
     preprocessor_artifact_name: str = "preprocessor_artifact"

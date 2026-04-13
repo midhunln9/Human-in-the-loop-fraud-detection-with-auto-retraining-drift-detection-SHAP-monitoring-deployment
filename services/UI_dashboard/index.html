@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realtime Transaction Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #e9ecef;
+      font-size: 14px;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-left: 6px solid #007bff;
+    }
+
+    .card.fraud {
+      border-left-color: #dc3545;
+    }
+
+    .card.safe {
+      border-left-color: #28a745;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      margin: 6px 0;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .features {
+      margin-top: 10px;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+
+    .buttons {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .correct-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .wrong-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .empty {
+      color: #666;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>Realtime Transaction Dashboard</h1>
+    <div class="status" id="connectionStatus">Connecting...</div>
+  </div>
+
+  <div id="messages" class="container">
+    <div class="empty" id="emptyState">No live messages yet...</div>
+  </div>
+
+  <script>
+    // change this to your SSE server URL
+    const SSE_URL = "http://sselb-1270756020.ap-south-1.elb.amazonaws.com/events";
+
+    const messagesContainer = document.getElementById("messages");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const emptyState = document.getElementById("emptyState");
+
+    function removeEmptyState() {
+      if (emptyState) {
+        emptyState.style.display = "none";
+      }
+    }
+
+    function showEmptyStateIfNeeded() {
+      const cards = document.querySelectorAll(".card");
+      if (cards.length === 0 && emptyState) {
+        emptyState.style.display = "block";
+      }
+    }
+
+    function createCard(data) {
+      removeEmptyState();
+
+      const card = document.createElement("div");
+      card.className = "card " + (data.prediction === 1 ? "fraud" : "safe");
+
+      const featureData = {};
+      for (const key in data) {
+        if (key.startsWith("V")) {
+          featureData[key] = data[key];
+        }
+      }
+
+      card.innerHTML = `
+        <div class="title">
+          Transaction ${data.transaction_id}
+        </div>
+
+        <div class="row"><strong>Prediction:</strong> ${data.prediction}</div>
+        <div class="row"><strong>Status:</strong> ${data.prediction === 1 ? "Fraud predicted" : "Not fraud predicted"}</div>
+
+        <div class="features">
+          <strong>Features:</strong>
+          <pre>${JSON.stringify(featureData, null, 2)}</pre>
+        </div>
+
+        <div class="buttons">
+          <button class="correct-btn">Correct</button>
+          <button class="wrong-btn">Not correct</button>
+        </div>
+      `;
+
+      const correctBtn = card.querySelector(".correct-btn");
+      const wrongBtn = card.querySelector(".wrong-btn");
+
+      correctBtn.addEventListener("click", function () {
+        card.remove();
+        showEmptyStateIfNeeded();
+      });
+
+      wrongBtn.addEventListener("click", function () {
+        card.remove();
+        showEmptyStateIfNeeded();
+      });
+
+      messagesContainer.prepend(card);
+    }
+
+    const eventSource = new EventSource(SSE_URL);
+
+    eventSource.onopen = function () {
+      connectionStatus.textContent = "Connected to SSE server";
+      connectionStatus.style.background = "#d4edda";
+    };
+
+    eventSource.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        createCard(data);
+      } catch (error) {
+        console.error("Error parsing SSE message:", error);
+      }
+    };
+
+    eventSource.onerror = function () {
+      connectionStatus.textContent = "Connection lost / retrying...";
+      connectionStatus.style.background = "#f8d7da";
+    };
+  </script>
+</body>
+</html>

@@ -211,3 +211,4 @@ api.env
 pipeline.env
 
 /dataset
+*.env

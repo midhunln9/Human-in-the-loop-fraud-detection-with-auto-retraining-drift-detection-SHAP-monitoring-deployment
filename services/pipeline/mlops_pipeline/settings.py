@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         wandb_silent: Whether to suppress W&B console output.
     """
 
-    model_config = SettingsConfigDict(env_file="services/pipeline/.env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file="/Users/midhunln/Documents/Human-in-the-loop-fraud-detection-with-auto-retraining-drift-detection-SHAP-monitoring-deployment/services/pipeline/pipeline.env", env_file_encoding="utf-8", extra="ignore")
 
     db_link: str = Field(..., validation_alias="db_link")
 

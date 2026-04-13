@@ -152,13 +152,3 @@ class PipelineRunner:
         logger.info(f"Model promoted in {t1 - t0} seconds")
 
         logger.info(f"Pipeline completed successfully in {time.perf_counter() - t_start} seconds")
-
-
-
-
-
-
-
-
-    
-        

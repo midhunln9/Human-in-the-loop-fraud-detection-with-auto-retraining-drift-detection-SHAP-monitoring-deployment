@@ -31,7 +31,7 @@ def main() -> None:
         None
     """
     setup_logging()
-    load_dotenv(find_dotenv())
+    load_dotenv(find_dotenv("/Users/midhunln/Documents/Human-in-the-loop-fraud-detection-with-auto-retraining-drift-detection-SHAP-monitoring-deployment/services/pipeline/pipeline.env"))
     settings = Settings()
     s3_storage = S3Storage(settings)
     transformation_config = TransformationConfig()

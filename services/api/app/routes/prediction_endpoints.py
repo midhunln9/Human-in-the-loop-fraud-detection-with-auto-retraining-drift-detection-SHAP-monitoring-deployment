@@ -6,6 +6,7 @@ import logging
 import boto3
 from app.sns_publish import SNSPublish
 import os
+import uuid
 
 router = APIRouter()
 
@@ -16,6 +17,21 @@ aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
 region_name=os.getenv("AWS_REGION"),
 aws_sns_arn=os.getenv("AWS_SNS_ARN"))
 
+def create_sns_message_format(message : dict):
+    event = {}
+    for x,y in message.items():
+        if x == "features":
+            j = 0
+            for i in y:
+                event[f"V{j}"] = i
+                j+=1
+        elif x == "prediction":
+            event["prediction"] = y
+        else:
+            event["transaction_id"] = y
+    return event
+
+
 
 @router.post("/predict")
 async def predict(real_time_prediction_request: RealTimePredictionRequest, request: Request):
@@ -24,6 +40,7 @@ async def predict(real_time_prediction_request: RealTimePredictionRequest, reque
     if model is None:
         logger.error("model not loaded")
         raise HTTPException(status_code=500, detail="Model not loaded")
+    transaction_id =str(uuid.uuid4())
     df = pd.DataFrame([real_time_prediction_request.model_dump()])
     df_preprocessed = request.app.state.preprocessor.transform(df)
     logger.info("data preprocessed successfully")
@@ -35,10 +52,14 @@ async def predict(real_time_prediction_request: RealTimePredictionRequest, reque
     pred_label = int(prediction[0])
 
     payload = {
+        "transaction_id" : transaction_id,
         "features": features,
         "prediction": pred_label
     }
-    sns_publish.publish(message = payload)
+
+    refined_payload = create_sns_message_format(payload)
+
+    sns_publish.publish(message = refined_payload)
 
     logger.info("probability calculated successfully")
     return {"prediction": int(prediction[0]), "probability": float(probability[0])}

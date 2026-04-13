@@ -1,0 +1,27 @@
+FROM python:3.12-slim
+
+WORKDIR /app 
+# will make app as current working directory
+
+# Install system libraries needed by LightGBM and common compiled packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN pip3 install --no-cache-dir uv 
+
+COPY services/pipeline/uv.lock /app/uv.lock
+COPY services/pipeline/pyproject.toml /app/pyproject.toml
+
+# Install dependencies, but not your project code yet
+RUN uv sync --frozen --no-install-project
+
+COPY services/pipeline/ /app/
+# source -> relative path 
+# destination  -> absolute path
+
+# Install the project itself into the existing env
+RUN uv sync --frozen
+
+CMD ["uv", "run", "python", "-m", "mlops_pipeline"]

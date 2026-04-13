@@ -1,4 +1,4 @@
-from locust import HttpUser, task, between
+from locust import HttpUser, task, between, constant
 import random
 
 def generate_payload():
@@ -15,7 +15,7 @@ def generate_payload():
 
 
 class PredictUser(HttpUser):
-    wait_time = between(1, 3)  # simulate user think time
+    wait_time = constant(0)  # simulate user think time
 
     @task
     def predict(self):
